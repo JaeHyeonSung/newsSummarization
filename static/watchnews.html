@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>최신 뉴스 보기</title>
+    <style>
+        body {
+            font-family: 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin: 20px 0;
+            color: #333;
+        }
+
+        .home-button {
+            padding: 10px 20px;
+            background-color: #34d399;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            margin: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .home-button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .button-container00 {
+            display: flex;
+            justify-content: center;
+            gap: 10px;  /* 버튼 사이 간격 */
+            margin-bottom: 20px;
+        }
+        .button-container01 {
+            display: flex;
+            justify-content: center;
+            gap: 10px;  /* 버튼 사이 간격 */
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #5A67D8;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        button:hover {
+            background-color: #434190;
+            transform: scale(1.05);
+        }
+
+        #news-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .news-item {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s;
+        }
+
+        .news-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-item img {
+            width: 72px;
+            height: 72px;
+            margin-right: 20px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .news-item h3 {
+            font-size: 16px;
+            margin: 0;
+            flex: 1;
+            text-align: left;
+        }
+
+        .news-item a {
+            color: #333;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .news-item a:hover {
+            color: #007BFF;
+        }
+
+        .copy-button {
+            padding: 10px;
+            background-color: #38B2AC;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+
+        .copy-button:hover {
+            background-color: #319795;
+        }
+
+        /* 중앙 정렬 */
+        h1, button, .home-button {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>카테고리 별 최신뉴스 보기</h1>
+    <div class="button-container01">
+        <button class="home-button" onclick="goHome()">홈으로 돌아가기</button>
+        <button class="home-button" onclick="goSummarize()">뉴스 요약 바로가기</button>
+    </div>
+    
+
+    <!-- 버튼들을 가로로 배치할 컨테이너 -->
+    <div class="button-container00">
+        <button onclick="fetchNews('정치')">정치</button>
+        <button onclick="fetchNews('경제')">경제</button>
+        <button onclick="fetchNews('사회/문화')">사회/문화</button>
+        <button onclick="fetchNews('IT/과학')">IT/과학</button>
+        <button onclick="fetchNews('세계')">세계</button>
+    </div>
+
+    <div id="news-container"></div>
+
+    <script>
+        async function fetchNews(category) {
+            try {
+                const response = await fetch(`/news?category=${category}`);
+                const newsList = await response.json();
+
+                console.log(newsList)
+
+                const container = document.getElementById('news-container');
+                container.innerHTML = '';
+
+                if (newsList.error) {
+                    container.innerHTML = '<p>뉴스를 가져오는 데 실패했습니다.</p>';
+                    return;
+                }
+
+                if(newsList.length == 0){
+                    container.innerHTML = '<p>뉴스가 없습니다.</p>';
+                    return;
+                }
+
+                newsList.forEach(news => {
+                    const newsItem = document.createElement('div');
+                    newsItem.classList.add('news-item');
+                    newsItem.innerHTML = `
+                        <img src="${news.image_url}" alt="${news.title}">
+                        <h3><a href="${news.url}" target="_blank">${news.title}</a></h3>
+                        <button class="copy-button" onclick="copyToClipboard('${news.url}')">URL 복사하기</button>
+                    `;
+                    container.appendChild(newsItem);
+                });
+            } catch (error) {
+                console.error('Error fetching news:', error);
+                document.getElementById('news-container').innerHTML = '<p>뉴스를 가져오는 중 오류가 발생했습니다.</p>';
+            }
+        }
+        function copyToClipboard(url) {
+            navigator.clipboard.writeText(url)
+                .then(() => {
+                    alert('URL이 복사되었습니다!');
+                })
+                .catch(err => {
+                    console.error('URL 복사 실패:', err);
+                });
+        }
+        function goHome() {
+            window.location.href = '/';  // 홈 페이지로 이동
+        }
+        function goSummarize() {
+            window.location.href = '/summarizepage';  // 요약 페이지로 이동
+        }
+    </script>
+</body>
+</html>

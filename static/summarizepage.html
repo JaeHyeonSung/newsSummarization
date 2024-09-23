@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뉴스 요약하기</title>
+    <style>
+        body {
+            font-family: 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f9fafb;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: #4a4a4a;
+        }
+        
+        h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #6b7280;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 30px;
+            border: 1px solid #d1d5db;
+            margin-bottom: 20px;
+            outline: none;
+            transition: border 0.3s ease;
+        }
+        
+        input[type="text"]:focus {
+            border-color: #007BFF;
+        }
+        
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            background-color: #34d399;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        
+        button:hover {
+            background-color: #10b981;
+            transform: scale(1.05);
+        }
+
+        .secondary-button {
+            margin-left: 10px;
+            background-color: #60a5fa;
+        }
+
+        .secondary-button:hover {
+            background-color: #3b82f6;
+        }
+
+        #summary-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f1f5f9;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            min-height: 150px;
+            overflow-y: auto;
+            max-height: 300px;
+            font-size: 15px;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>세줄로 요약해줘</h1>
+        <h3>뉴스 URL 입력하기</h3>
+        <form id="news-form">
+            <input type="text" id="news-url" placeholder="뉴스 URL을 입력하세요" required>
+            <button type="submit">요약하기</button>
+            <button type="button" class="secondary-button" onclick="goHome()">홈으로 돌아가기</button>
+        </form>
+        
+        <div id="summary-result"></div>
+    </div>
+
+    <script>
+        document.getElementById('news-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const url = document.getElementById('news-url').value;
+            console.log(url);
+            try {
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const data = await response.json();
+                document.getElementById('summary-result').textContent = data.summary || '요약할 내용이 없습니다.';
+            } catch (error) {
+                document.getElementById('summary-result').textContent = '요약을 가져오는 중 오류가 발생했습니다.';
+                console.error('Error:', error);
+            }
+        });
+
+        function goHome() {
+            window.location.href = '/';  // 홈 페이지로 이동
+        }
+    </script>
+</body>
+</html>

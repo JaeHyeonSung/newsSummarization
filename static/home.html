@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>세줄로 요약해줘</title>
+    <style>
+        body {
+            font-family: 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f9fafb;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #4a4a4a;
+            margin-bottom: 40px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            background-color: #34d399;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: #10b981;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            background-color: #059669;
+        }
+    </style>
+</head>
+<body>
+    <h1>세줄로 요약해줘</h1>
+    <button onclick="window.location.href='/watchnews'">최신 뉴스 보기</button>
+    <button onclick="window.location.href='/summarizepage'">뉴스 요약하기</button>
+</body>
+</html>
