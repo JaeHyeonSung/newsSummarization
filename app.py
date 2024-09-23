@@ -1,6 +1,6 @@
 from quart import Quart, request, jsonify, render_template
 from bs4 import BeautifulSoup
-import requests
+import requests, asyncio
 from transformers import BartTokenizer, BartForConditionalGeneration, MBart50Tokenizer, MBartForConditionalGeneration
 import re
 import aiohttp
@@ -228,8 +228,8 @@ async def watchnews():
 async def summarizepage():
     return await app.send_static_file('summarizepage.html')
 
-
+async def run_app():
+    await app.run_task(host='0.0.0.0', port=8000)
 
 if __name__ == '__main__':
-    # app.run(host='0.0.0.0',debug=True, port=5000)
-    pass
+    asyncio.run(run_app())
