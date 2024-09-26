@@ -196,13 +196,30 @@
             }
         }
         function copyToClipboard(url) {
-            navigator.clipboard.writeText(url)
-                .then(() => {
+            if (navigator.clipboard) {
+                // 클립보드 API가 지원될 경우
+                navigator.clipboard.writeText(url)
+                    .then(() => {
+                        alert('URL이 복사되었습니다!');
+                    })
+                    .catch(err => {
+                        console.error('URL 복사 실패:', err);
+                    });
+            } else {
+                // 클립보드 API가 지원되지 않을 경우 execCommand 방식으로 복사
+                const tempInput = document.createElement('input');
+                document.body.appendChild(tempInput);
+                tempInput.value = url;
+                tempInput.select();
+                try {
+                    document.execCommand('copy');
                     alert('URL이 복사되었습니다!');
-                })
-                .catch(err => {
-                    console.error('URL 복사 실패:', err);
-                });
+                } catch (err) {
+                    console.error('execCommand 복사 실패:', err);
+                } finally {
+                    document.body.removeChild(tempInput);
+                }
+            }
         }
         function goHome() {
             window.location.href = '/';  // 홈 페이지로 이동

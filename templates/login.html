@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f8ff;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            width: 400px;
+            text-align: center;
+        }
+        h1 {
+            color: #2e8b57;
+        }
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            width: 95%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #2e8b57;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1e6840;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>로그인</h1>
+        <form id="loginForm" action="/login" method="post">
+            <input type="text" name="userid" id="userid" placeholder="아이디" required>
+            <input type="password" name="password" id="password" placeholder="비밀번호" required> <!-- ID 추가 -->
+            <button type="submit">로그인</button>
+        </form>
+        <span id="loginMessage"></span>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').onsubmit = async function(event) {
+            // event.preventDefault(); // 제거해야 함
+
+            const userid = document.getElementById('userid').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded', // URL 인코딩 형식으로 변경
+                },
+                body: `userid=${encodeURIComponent(userid)}&password=${encodeURIComponent(password)}`, // URL 인코딩된 데이터
+            });
+
+            const result = await response.json(); // JSON으로 응답 처리
+
+            if (response.status === 200) { // 성공적으로 로그인했을 경우
+                if (userid === "admin") {
+                    window.location.href = '/admin'; // 관리자로 로그인 시 관리 페이지로 이동
+                } else {
+                    document.getElementById('loginMessage').innerText = "로그인이 완료되었습니다.";
+                    setTimeout(() => {
+                        window.location.href = '/'; // 일반 사용자 로그인 후 홈으로 이동
+                    }, 1000);
+                }
+            } else {
+                document.getElementById('loginMessage').innerText = result.message; // 에러 메시지 출력
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background-color: white;
+            padding: 2em;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 350px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 1.5em;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        input:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #checkUsername {
+            background-color: #008CBA;
+            color: white;
+            margin-bottom: 1em;
+        }
+        #registerButton {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #registerButton:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        span#usernameMessage {
+            display: block;
+            margin-bottom: 1em;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>회원가입</h1>
+        <form id="registerForm" action="/register" method="post">
+            <input type="text" name="userid" id="userid" placeholder="아이디" required>
+            <button type="button" id="checkUsername">중복검사</button>
+            <span id="usernameMessage"></span>
+            <input type="password" name="password" placeholder="비밀번호" required>
+            <input type="email" name="email" placeholder="이메일" required>
+            <button type="submit" id="registerButton" disabled>회원가입</button>
+        </form>
+    </div>
+
+    <script>
+        let isUsernameChecked = false;
+
+        document.getElementById('checkUsername').onclick = async function() {
+            const userid = document.getElementById('userid').value;
+
+            if (!userid) {
+                document.getElementById('usernameMessage').innerText = "아이디를 입력해주세요.";
+                return;
+            }
+
+            const response = await fetch('/check-username', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userid }),
+            });
+
+            const result = await response.json();
+            if (response.status === 200) {
+                isUsernameChecked = true;
+                document.getElementById('usernameMessage').innerText = result.message;
+                document.getElementById('registerButton').disabled = false; // Enable register button
+            } else {
+                isUsernameChecked = false;
+                document.getElementById('usernameMessage').innerText = result.message;
+                document.getElementById('registerButton').disabled = true; // Disable register button
+            }
+        };
+
+        document.getElementById('registerForm').onsubmit = function() {
+            if (!isUsernameChecked) {
+                alert("아이디 중복검사를 진행해주세요.");
+                return false; // Prevent form submission
+            }
+        };
+    </script>
+</body>
+</html>
