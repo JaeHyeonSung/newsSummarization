@@ -23,50 +23,7 @@ async def init_db():
         host='localhost'
     )
 
-# Postgre SQL 연결 Pool 설정
-# db_pool = None
 
-# # Init db_pool
-# def init_db_pool():
-#     global db_pool
-#     try:
-#         db_pool = psycopg2.pool.SimpleConnectionPool(
-#             1, 20,
-#             host ="localhost",
-#             database = "NewsSummarization",
-#             user="postgres",
-#             password="1234"
-#         )
-#         if db_pool:
-#             print("PostgreSQL connection pool created successfully.")
-#     except Exception as error:
-#         print(f"Error creating PostgreSQL connection pool: {error}")
-
-# async def get_db_connection():
-#     try:
-#         connection=db_pool.getconn()
-#         if connection:
-#             print("PostgreSQL connection from pool acuired")
-#             return connection
-#     except Exception as error:
-#         print(f"Error getting connection : {error}")
-
-# async def close_db_connection(connection):
-#     if db_pool:
-#         db_pool.putconn(connection)
-#         print("PostgreSQL connection returned to pool.")
-
-
-# @app.before_serving
-# async def startup():
-#     init_db_pool()
-
-# @app.after_serving
-# async def cleanup():
-#     if db_pool:
-#         db_pool.closeall()
-#         print("PostgreSQL connection pool closed.")
-    
 
  
 
@@ -122,22 +79,7 @@ async def fetch_news_by_category(session, category_url):
 # 번역 모델 및 토크나이저
 translation_tokenizer = MBart50Tokenizer.from_pretrained("facebook/mbart-large-50-many-to-many-mmt")
 translation_model = MBartForConditionalGeneration.from_pretrained("facebook/mbart-large-50-many-to-many-mmt")
-# def translate_text_papago(text, source_lang, target_lang, client_id, client_secret):
-    # url = "https://openapi.naver.com/v1/papago/n2mt"
-    # headers = {
-    #     "X-Naver-Client-Id": client_id,
-    #     "X-Naver-Client-Secret": client_secret,
-    #     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-    # }
-    # data = {
-    #     "source": source_lang,
-    #     "target": target_lang,
-    #     "text": text
-    # }
-    # response = requests.post(url, headers=headers, data=data)
-    # response.raise_for_status()  # 응답 결과 확인용
-    # result = response.json()
-    # return result['message']['result']['translatedText']
+
 # 기사 내용 정리하기 (공백, 특수문자 제거 등)
 def clean_text(text):
     text = BeautifulSoup(text, "html.parser").get_text()
@@ -443,34 +385,6 @@ async def viewed_news_log():
         return "서버 오류가 발생했습니다.", 500
     
     return "뉴스 열람 기록이 저장되었습니다.", 200
-
-
-
-# async def log_news_click():
-#     try:
-#         data = await request.json  # 요청에서 JSON 데이터를 받아옴
-#         user_id = session.get('user_id')  # 세션에서 로그인된 유저 ID 가져오기
-#         title = data.get('title')  # 제목 가져오기
-#         url = data.get('url')  # URL 가져오기
-#         accessed_at = datetime.now()  # 현재 시간 가져오기
-#         conn=await init_db()
-#         # 데이터베이스에 클릭 기록을 저장
-
-#         user = await conn.fetchrow("SELECT * FROM users WHERE user_id = $1", user_id)
-#         user_key=user['user_key']
-#         print(user_key)
-        
-#         await conn.execute(
-#             "INSERT INTO user_news_logs (user_id, title, url, accessed_at) VALUES (%s, %s, %s, %s)",
-#             (user_id, title, url, accessed_at)
-#         )
-#         await conn.commit()
-
-#         return jsonify({"message": "로그가 성공적으로 기록되었습니다."})
-#     except Exception as e:
-#         print(f"로그 기록 중 오류 발생: {e}")
-#         return jsonify({"error": "로그를 기록하는 중 문제가 발생했습니다."}), 500
-
 
 @app.route('/viewednews')
 async def viewed_news():
