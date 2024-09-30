@@ -160,12 +160,15 @@
     <div id="news-container"></div>
 
     <script>
+        
+        
+
         async function fetchNews(category) {
             try {
                 const response = await fetch(`/news?category=${category}`);
                 const newsList = await response.json();
 
-                console.log(newsList)
+                // console.log(newsList)
 
                 const container = document.getElementById('news-container');
                 container.innerHTML = '';
@@ -179,13 +182,17 @@
                     container.innerHTML = '<p>뉴스가 없습니다.</p>';
                     return;
                 }
-
+                
                 newsList.forEach(news => {
                     const newsItem = document.createElement('div');
                     newsItem.classList.add('news-item');
+                    console.log(news.title)
+                    let sanitizedTitle = replaceDoubleQuotes(news.title);
+                    sanitizedTitle = replaceQuotes(sanitizedTitle);
+                    console.log("sanitized title : ",sanitizedTitle)
                     newsItem.innerHTML = `
                         <img src="${news.image_url}" alt="${news.title}">
-                        <h3><a href="${news.url}" target="_blank">${news.title}</a></h3>
+                        <h3><a href="${news.url}" target="_blank" onclick="logNewsClick('${sanitizedTitle}', '${news.url}')">${news.title}</a></h3>
                         <button class="copy-button" onclick="copyToClipboard('${news.url}')">URL 복사하기</button>
                     `;
                     container.appendChild(newsItem);
@@ -220,6 +227,34 @@
                     document.body.removeChild(tempInput);
                 }
             }
+        }
+
+        function logNewsClick(title, url) {
+            console.log("Logging news click..")
+            console.log("Title: ", title)
+            console.log("url: ", url)
+            // console.log(url)
+            fetch('/log-news-click', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title: title, url: url }),
+            }).then(response => {
+                if (response.ok) {
+                    console.log('뉴스 클릭 기록이 저장되었습니다.');
+                } else {
+                    console.error('뉴스 클릭 기록 저장 실패', response.status);
+                }
+            }).catch(error => {
+                console.error('Error logging news click:', error);
+            });
+        }
+        function replaceDoubleQuotes(title) {
+            return title.replace(/"/g, "'"); // 큰 따옴표를 작은 따옴표로 변환
+        }
+        function replaceQuotes(title) {
+            return title.replace(/'/g, ""); // 큰 따옴표를 작은 따옴표로 변환
         }
         function goHome() {
             window.location.href = '/';  // 홈 페이지로 이동

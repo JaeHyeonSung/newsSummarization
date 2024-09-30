@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뉴스 열람 기록</title>
+    <style>
+        body {
+            font-family: 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f9fafb;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #4a4a4a;
+            margin-bottom: 40px;
+        }
+
+        table {
+            width: 80%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px 20px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f3f4f6;
+            color: #333;
+        }
+
+        td a {
+            color: #1f2937;
+            text-decoration: none;
+        }
+
+        td a:hover {
+            text-decoration: underline;
+        }
+
+        .timestamp {
+            color: #6b7280;
+        }
+
+        button {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 18px;
+            border: none;
+            cursor: pointer;
+            background-color: #34d399;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: #10b981;
+            transform: scale(0.85);
+        }
+
+        button:active {
+            background-color: #059669;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>뉴스 열람 기록</h1>
+    <button onclick="window.location.href='/'">홈으로 돌아가기</button>
+    <table>
+        <thead>
+            <tr>
+                <th>뉴스 제목</th>
+                <th>URL</th>
+                <th>열람 시각</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for news in news_list %}
+            <tr>
+                <td>{{ news.news_title }}</td>
+                <td><a href="{{ news.news_url }}" target="_blank">{{ news.news_url }}</a><button class="copy-button" onclick="copyToClipboard('{{news.news_url}}')">URL 복사하기</button></td>
+                <td class="timestamp">{{ news.viewed_time }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    
+
+    <script>
+        function copyToClipboard(url) {
+            if (navigator.clipboard) {
+                // 클립보드 API가 지원될 경우
+                navigator.clipboard.writeText(url)
+                    .then(() => {
+                        alert('URL이 복사되었습니다!');
+                    })
+                    .catch(err => {
+                        console.error('URL 복사 실패:', err);
+                    });
+            } else {
+                // 클립보드 API가 지원되지 않을 경우 execCommand 방식으로 복사
+                const tempInput = document.createElement('input');
+                document.body.appendChild(tempInput);
+                tempInput.value = url;
+                tempInput.select();
+                try {
+                    document.execCommand('copy');
+                    alert('URL이 복사되었습니다!');
+                } catch (err) {
+                    console.error('execCommand 복사 실패:', err);
+                } finally {
+                    document.body.removeChild(tempInput);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

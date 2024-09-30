@@ -5,7 +5,8 @@ from transformers import BartTokenizer, BartForConditionalGeneration, MBart50Tok
 from psycopg2 import pool
 from flask_cors import CORS
 from werkzeug.security import check_password_hash, generate_password_hash
-
+from datetime import datetime
+from urllib.parse import unquote
 
 app = Quart(__name__)
 # CORS(app)
@@ -218,7 +219,9 @@ async def fetch_article(url):
 # 홈 화면
 @app.route('/')
 async def home():
-    return await render_template('home.html')
+    isloggedin='userid' in session
+    
+    return await render_template('home.html', isloggedin=isloggedin)
 
 # 요약 기능 경로
 @app.route('/summarize', methods=['POST'])
@@ -259,7 +262,6 @@ async def summarize():
 @app.route('/news')
 async def get_news():
     category = request.args.get('category', '정치')
-    print(category)
     category_urls = {
         '정치': 'https://news.naver.com/main/list.naver?mode=LSD&mid=shm&sid1=100',
         '경제': 'https://news.naver.com/main/list.naver?mode=LSD&mid=shm&sid1=101',
@@ -362,10 +364,10 @@ async def login():
         userid = (await request.form)['userid']
         password = (await request.form)['password']
         conn = await init_db()
+
+
         # 데이터베이스에서 유저 정보 확인
         user = await conn.fetchrow("SELECT * FROM users WHERE user_id = $1", userid)
-        print(password)
-        print(user['user_password'])
         if user:
             print(check_password_hash(user['user_password'], password))
             if check_password_hash(user['user_password'], password):
@@ -373,16 +375,17 @@ async def login():
                 session['userid'] = userid
                 # 관리자 아이디인 경우
                 if userid == 'admin':
-                    return redirect(url_for('admin_page'))
+                    return redirect(url_for('home'))
                 else:
                     print(111111)
                     flash('로그인이 완료되었습니다.', 'success')
                     return redirect(url_for('home'))
             else:
-                print("비밀번호가 잘못되었습니다.")
+                flash('비밀번호가 잘못되었습니다.', 'error')
                 return redirect(url_for('login'))
         else:
             print(222222)
+            flash('아이디가 존재하지 않습니다.', 'error')
             print('아이디가 존재하지 않습니다.')
         
 
@@ -397,14 +400,106 @@ async def admin_page():
     return "관리자 페이지입니다."
 
 # 로그아웃 라우트
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 async def logout():
     session.pop('userid', None)
-    return redirect(url_for('login'))
+    return redirect(url_for('home'))
 
 # 세션을 위한 비밀키 설정
 app.secret_key = 'your_secret_key'
 
+# 사용자가 열람한 뉴스 기록
+@app.route('/log-news-click', methods=['POST'])
+async def viewed_news_log():
+    try:
+        # 폼 데이터 가져오기
+        user_id = session.get('userid')
+        data = await request.get_json()
+        # print(f"Received data: {data}")
+        title = data.get('title')
+        url=data.get('url')
+        decoded_title=unquote(title)
+        decoded_url=unquote(url)
+        if not user_id:
+            return "로그인 된 유저가 없습니다.", 403
+        conn = await init_db()
+
+
+        # 회원정보 저장
+        user = await conn.fetchrow("SELECT * FROM users WHERE user_id = $1", user_id)
+        user_key=user['user_key']
+        print(user_key)
+        await conn.execute(
+            "INSERT INTO viewed_news (user_key, news_title, news_url, viewed_time) VALUES ($1, $2, $3, $4)",
+            user_key, title, url, datetime.now()
+        )
+        
+        # DB 연결 닫기
+        await conn.close()
+        
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return "서버 오류가 발생했습니다.", 500
+    
+    return "뉴스 열람 기록이 저장되었습니다.", 200
+
+
+
+# async def log_news_click():
+#     try:
+#         data = await request.json  # 요청에서 JSON 데이터를 받아옴
+#         user_id = session.get('user_id')  # 세션에서 로그인된 유저 ID 가져오기
+#         title = data.get('title')  # 제목 가져오기
+#         url = data.get('url')  # URL 가져오기
+#         accessed_at = datetime.now()  # 현재 시간 가져오기
+#         conn=await init_db()
+#         # 데이터베이스에 클릭 기록을 저장
+
+#         user = await conn.fetchrow("SELECT * FROM users WHERE user_id = $1", user_id)
+#         user_key=user['user_key']
+#         print(user_key)
+        
+#         await conn.execute(
+#             "INSERT INTO user_news_logs (user_id, title, url, accessed_at) VALUES (%s, %s, %s, %s)",
+#             (user_id, title, url, accessed_at)
+#         )
+#         await conn.commit()
+
+#         return jsonify({"message": "로그가 성공적으로 기록되었습니다."})
+#     except Exception as e:
+#         print(f"로그 기록 중 오류 발생: {e}")
+#         return jsonify({"error": "로그를 기록하는 중 문제가 발생했습니다."}), 500
+
+
+@app.route('/viewednews')
+async def viewed_news():
+    try:
+        # 사용자가 로그인했는지 확인
+        user_id = session.get('userid')
+        if not user_id:
+            return redirect(url_for('home'))  # 로그인 페이지로 리다이렉트
+
+        conn = await init_db()
+
+        # 로그인한 사용자의 정보를 가져옴
+        user = await conn.fetchrow("SELECT * FROM users WHERE user_id = $1", user_id)
+        user_key = user['user_key']
+
+        # 해당 사용자의 뉴스 열람 기록을 데이터베이스에서 가져옴
+        viewed_news = await conn.fetch(
+            """
+            SELECT news_title, news_url, viewed_time 
+            FROM viewed_news 
+            WHERE user_key = $1
+            ORDER BY viewed_time DESC
+            """, 
+            user_key
+        )
+
+        return await render_template('viewednews.html', news_list=viewed_news)
+    except Exception as e:
+        return f"에러가 발생했습니다: {str(e)}"
 
 # 앱 실행 설정
 async def run_app():

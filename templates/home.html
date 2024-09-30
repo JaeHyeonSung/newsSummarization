@@ -51,7 +51,22 @@
     <h1>세줄로 요약해줘</h1>
     <button onclick="window.location.href='/watchnews'">최신 뉴스 보기</button>
     <button onclick="window.location.href='/summarizepage'">뉴스 요약하기</button>
-    <button onclick="window.location.href='/register'">회원 가입하기</button>
-    <button onclick="window.location.href='/login'">로그인 하기</button>
+    
+    {% if isloggedin %}
+        <button onclick="logout()">로그아웃</button>
+        <button onclick="window.location.href='/viewednews'">뉴스 열람기록</button>
+    {% else %}
+        <button onclick="window.location.href='/register'">회원 가입하기</button>
+        <button onclick="window.location.href='/login'">로그인 하기</button>
+    {% endif %}
+    
+    <script>
+        function logout() {
+            // 로그아웃 API 호출 (서버 측에서 로그아웃 처리)
+            fetch('/logout', { method: 'POST' }).then(() => {
+                window.location.href='/'; // 로그아웃 후 페이지 새로고침
+            });
+        }
+    </script>
 </body>
 </html>
