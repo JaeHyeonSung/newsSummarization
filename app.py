@@ -49,7 +49,7 @@ async def fetch_news_by_category(session, category_url):
     if not html_content:  # HTML이 None이라면
         print("Failed to fetch page or no content returned.")
         return []
-
+    
     # 최신 10개 뉴스 크롤링
     articles = soup.select('ul.type06_headline li')[:10]
     news_list = []
@@ -98,9 +98,9 @@ def summarize_text(text):
     inputs = bart_tokenizer(text, return_tensors="pt", truncation=True, max_length=1024)
     summary_ids = bart_model.generate(
         inputs['input_ids'],
-        max_length=200,   # bart모델 생성되는 요약의 최대 길이
-        min_length=100,   # bart모델 생성되는 요약의 최소 길이  
-        length_penalty=0.5,
+        max_length=150,   # bart모델 생성되는 요약의 최대 길이
+        min_length=120,   # bart모델 생성되는 요약의 최소 길이  
+        length_penalty=0.8,
         num_beams=2,
         early_stopping=True
     )
@@ -204,6 +204,7 @@ async def summarize():
 @app.route('/news')
 async def get_news():
     category = request.args.get('category', '정치')
+    print(category)
     category_urls = {
         '정치': 'https://news.naver.com/main/list.naver?mode=LSD&mid=shm&sid1=100',
         '경제': 'https://news.naver.com/main/list.naver?mode=LSD&mid=shm&sid1=101',
@@ -211,7 +212,7 @@ async def get_news():
         'IT/과학': 'https://news.naver.com/main/list.naver?mode=LSD&mid=shm&sid1=105',
         '세계': 'https://news.naver.com/main/list.naver?mode=LSD&mid=shm&sid1=104'
     }
-
+    print(category)
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -347,8 +348,6 @@ async def logout():
     session.pop('userid', None)
     return redirect(url_for('home'))
 
-# 세션을 위한 비밀키 설정
-app.secret_key = 'your_secret_key'
 
 # 사용자가 열람한 뉴스 기록
 @app.route('/log-news-click', methods=['POST'])
@@ -386,6 +385,43 @@ async def viewed_news_log():
     
     return "뉴스 열람 기록이 저장되었습니다.", 200
 
+# 사용자가 열람한 뉴스 기록
+@app.route('/category-count-up', methods=['POST'])
+async def category_count_up():
+    try:
+        # 폼 데이터 가져오기
+        user_id = session.get('userid')
+        data = await request.get_json()
+        category = data.get('category')
+        if not user_id:
+            return "로그인 된 유저가 없습니다.", 403
+        conn = await init_db()
+
+
+        # 회원정보 저장
+        user = await conn.fetchrow("SELECT * FROM users WHERE user_id = $1", user_id)
+        user_key=user['user_key']
+
+        # 카테고리 
+        _category = await conn.fetchrow("SELECT * FROM categories WHERE category_name = $1", category)
+        category_key=_category['category_key']
+        print(category_key)
+        async with conn as cn:
+            quary ="""INSERT INTO cagtegorycount (user_key, category_key, count) 
+            VALUES ($1, $2, 1)
+            ON CONFLICT (user_key, category_key)
+            DO UPDATE SET count = categorycount.count + 1"""
+            await cn.execute(quary,user_key, category_key)
+        
+        return jsonify({"success": True}), 200
+        
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return "서버 오류가 발생했습니다.", 500
+    
+    
+
 @app.route('/viewednews')
 async def viewed_news():
     try:
@@ -411,9 +447,11 @@ async def viewed_news():
             user_key
         )
 
-        return await render_template('viewednews.html', news_list=viewed_news)
+        return await render_template('viewednews.html', news_list=viewed_news[:10])
     except Exception as e:
         return f"에러가 발생했습니다: {str(e)}"
+
+app.secret_key = 'your_secret_key'
 
 # 앱 실행 설정
 async def run_app():
