@@ -1,6 +1,6 @@
 from quart import Quart, request, jsonify, render_template, redirect, url_for, flash, session
 from bs4 import BeautifulSoup
-import requests, asyncio, re, aiohttp, asyncpg
+import requests, asyncio, re, aiohttp, asyncpg, os
 from transformers import BartTokenizer, BartForConditionalGeneration, MBart50Tokenizer, MBartForConditionalGeneration
 from psycopg2 import pool
 from flask_cors import CORS
@@ -455,7 +455,8 @@ app.secret_key = 'your_secret_key'
 
 # 앱 실행 설정
 async def run_app():
-    await app.run_task(host='0.0.0.0', port=8000)
+    port = int(os.environ.get("PORT",8000))
+    await app.run_task(host='0.0.0.0', port=port)
 # 앱 실행
 if __name__ == '__main__':
 
