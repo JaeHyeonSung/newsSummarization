@@ -81,12 +81,14 @@ translation_model = MBartForConditionalGeneration.from_pretrained("facebook/mbar
 
 # 기사 내용 정리하기 (공백, 특수문자 제거 등)
 def clean_text(text):
+    print("cleaning text")
     text = BeautifulSoup(text, "html.parser").get_text()
     text = re.sub(r'\s+', ' ', text)
     text = re.sub(r'[^\w\s.,!?가-힣]', '', text)
     return text.strip()
 # 기사 내용 분리하기
 def truncate_text(text, max_length=1024):
+    print("truncating text")
     tokens = bart_tokenizer.encode(text, truncation=False)
     if len(tokens) > max_length:
         tokens = tokens[:max_length]
@@ -94,12 +96,13 @@ def truncate_text(text, max_length=1024):
     return text
 # 기사 내용 요약하기
 def summarize_text(text):
+    print("summarizing text")
     inputs = bart_tokenizer(text, return_tensors="pt", truncation=True, max_length=1024)
     summary_ids = bart_model.generate(
         inputs['input_ids'],
-        max_length=150,   # bart모델 생성되는 요약의 최대 길이
-        min_length=120,   # bart모델 생성되는 요약의 최소 길이  
-        length_penalty=0.8,
+        max_length=115,   # bart모델 생성되는 요약의 최대 길이
+        min_length=80,   # bart모델 생성되는 요약의 최소 길이  
+        length_penalty=1.0,
         num_beams=2,
         early_stopping=True
     )
@@ -107,6 +110,7 @@ def summarize_text(text):
     return summary
 # 기사 내용 번역하기
 def translate_text(text, src_lang, tgt_lang):
+    print("translating text")
     # Set source and target language codes
     translation_tokenizer.src_lang = src_lang
     # translation_tokenizer.tgt_lang = tgt_lang
@@ -118,7 +122,7 @@ def translate_text(text, src_lang, tgt_lang):
     translation_ids = translation_model.generate(
         inputs['input_ids'],
         max_length=512,
-        num_beams=4,
+        num_beams=2,
         early_stopping=True,
         forced_bos_token_id=translation_tokenizer.lang_code_to_id[tgt_lang]
     )
@@ -174,25 +178,27 @@ async def summarize():
         # 비동기적으로 기사 텍스트를 가져옴
         article_text = await fetch_article(url)
 
-        print(f'Original Text: {article_text[:1000]}')
-        translated_to_en = translate_text(article_text, src_lang="ko_KR", tgt_lang="en_XX")
-        print(f'Translated To Eng: {translated_to_en}')
+        #print(f'Original Text: {article_text[:1000]}')
+        translated_to_en = await asyncio.to_thread(translate_text, article_text, src_lang="ko_KR", tgt_lang="en_XX")
+        #print(f'Translated To Eng: {translated_to_en}')
         clean_text_content = clean_text(translated_to_en)
-        print(f'Cleaned Text: {clean_text_content[:100]}')
+        #print(f'Cleaned Text: {clean_text_content[:100]}')
 
         if not clean_text_content:
             return jsonify({'summary': 'No content found to summarize.'})
 
         truncated_text = truncate_text(translated_to_en)
-        print(f'Truncated Text: {truncated_text[:100]}')
+        #print(f'Truncated Text: {truncated_text[:100]}')
 
-        summary = summarize_text(truncated_text)
-        print(f'Summary: {summary}')
+        summary = await asyncio.to_thread(summarize_text, truncated_text)
+        #print(f'Summary: {summary}')
 
         if not summary or summary.strip() == "":
             return jsonify({'summary': 'No summary available.'})
-        translated_to_ko=translate_text(summary,src_lang="en_XX", tgt_lang="ko_KR")
-        print(f"translated_summary : {translated_to_ko}")
+        translated_to_ko=await asyncio.to_thread(translate_text, summary, src_lang="en_XX", tgt_lang="ko_KR")
+        #print(f"translated_summary : {translated_to_ko}")
+        print("summary finished")
+        print(translated_to_ko)
         return jsonify({'summary' : translated_to_ko})
         # return jsonify({'summary': summary})
 
