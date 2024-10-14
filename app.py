@@ -2,7 +2,6 @@ from quart import Quart, request, jsonify, render_template, redirect, url_for, f
 from bs4 import BeautifulSoup
 import requests, asyncio, re, aiohttp, asyncpg, os
 from transformers import BartTokenizer, BartForConditionalGeneration, MBart50Tokenizer, MBartForConditionalGeneration
-from psycopg2 import pool
 from flask_cors import CORS
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
